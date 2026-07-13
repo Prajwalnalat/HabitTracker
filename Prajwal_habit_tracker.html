@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prajwal's Habit Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg: #0d0f14;
+            --surface: #141720;
+            --s2: #1c2030;
+            --border: #252a3a;
+            --accent: #6c63ff;
+            --accent2: #ff6584;
+            --accent3: #43e97b;
+            --gold: #f7c948;
+            --text: #e8eaf6;
+            --muted: #6b7280;
+            --done: #43e97b
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .logo {
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: -.5px
+        }
+
+        .logo span {
+            color: var(--text)
+        }
+
+        .header-date {
+            font-size: 13px;
+            color: var(--muted);
+            font-family: 'Space Mono', monospace
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px
+        }
+
+        .nav-tab {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            transition: all .2s
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: #fff
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: var(--border);
+            color: var(--text)
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px
+        }
+
+        .view {
+            display: none
+        }
+
+        .view.active {
+            display: block
+        }
+
+        .today-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 28px
+        }
+
+        .today-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1
+        }
+
+        .today-title p {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 6px
+        }
+
+        .ring-wrap {
+            position: relative;
+            width: 80px;
+            height: 80px
+        }
+
+        .ring-wrap svg {
+            transform: rotate(-90deg)
+        }
+
+        .ring-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 700
+        }
+
+        .ring-label small {
+            font-size: 9px;
+            color: var(--muted)
+        }
+
+        .habits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        @media(max-width:600px) {
+            .habits-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .habit-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all .2s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .habit-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            border-radius: 3px 0 0 3px;
+            opacity: 0;
+            transition: opacity .2s
+        }
+
+        .habit-card.done {
+            border-color: var(--done);
+            background: rgba(67, 233, 123, .06)
+        }
+
+        .habit-card.done::before {
+            opacity: 1;
+            background: var(--done)
+        }
+
+        .habit-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px)
+        }
+
+        .habit-check {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all .2s
+        }
+
+        .habit-card.done .habit-check {
+            background: var(--done);
+            border-color: var(--done);
+            color: #0d0f14
+        }
+
+        .habit-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .habit-name {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .habit-streak {
+            font-size: 11px;
+            color: var(--gold);
+            margin-top: 2px
+        }
+
+        .habit-emoji {
+            font-size: 22px;
+            flex-shrink: 0
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            margin-top: 32px
+        }
+
+        .section-head h2 {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted)
+        }
+
+        .section-head .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border)
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px
+        }
+
+        @media(max-width:500px) {
+            .stats-row {
+                grid-template-columns: 1fr 1fr
+            }
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px
+        }
+
+        .stat-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 28px;
+            font-weight: 700
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px
+        }
+
+        .habits-progress-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px
+        }
+
+        .hprog-row {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px
+        }
+
+        .hprog-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px
+        }
+
+        .hprog-name {
+            font-size: 14px;
+            font-weight: 500
+        }
+
+        .hprog-pct {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .bar-track {
+            height: 6px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width .8s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px
+        }
+
+        .cal-nav h2 {
+            font-size: 20px;
+            font-weight: 700;
+            flex: 1;
+            text-align: center
+        }
+
+        .cal-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .cal-btn:hover {
+            background: var(--border)
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 24px
+        }
+
+        .cal-day-label {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            padding-bottom: 4px;
+            letter-spacing: 1px
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all .15s
+        }
+
+        .cal-day.empty {
+            cursor: default
+        }
+
+        .cal-day.has-data {
+            border-color: var(--border);
+            background: var(--surface)
+        }
+
+        .cal-day.today {
+            border-color: var(--accent)
+        }
+
+        .cal-day:not(.empty):hover {
+            border-color: var(--accent);
+            transform: scale(1.05)
+        }
+
+        .cal-day.selected {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .cal-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            margin-top: 3px
+        }
+
+        .dot-good {
+            background: var(--done)
+        }
+
+        .dot-mid {
+            background: var(--gold)
+        }
+
+        .dot-low {
+            background: var(--accent2)
+        }
+
+        .manage-habits {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 28px
+        }
+
+        .manage-row {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .manage-emoji {
+            font-size: 20px
+        }
+
+        .manage-name {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500
+        }
+
+        .del-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--accent2);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer
+        }
+
+        .del-btn:hover {
+            background: rgba(255, 101, 132, .1)
+        }
+
+        .add-form {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .add-form input,
+        .add-form select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            outline: none
+        }
+
+        .add-form input {
+            flex: 1;
+            min-width: 180px
+        }
+
+        .add-form input:focus,
+        .add-form select:focus {
+            border-color: var(--accent)
+        }
+
+        .add-btn {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            border-radius: 8px;
+            padding: 10px 22px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .add-btn:hover {
+            opacity: .85
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--done);
+            color: #0d0f14;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 10px 22px;
+            border-radius: 99px;
+            transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+            z-index: 999;
+            pointer-events: none
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0)
+        }
+
+        footer#prajwal-copyright {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 14px 24px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 10
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .footer-logo {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent)
+        }
+
+        .footer-copy {
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+            flex: 1
+        }
+
+        .footer-copy strong {
+            color: var(--text)
+        }
+
+        .footer-lock {
+            font-size: 11px;
+            color: var(--done);
+            font-family: 'Space Mono', monospace
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Prajwal<span>.habits</span></div>
+        <div class="nav-tabs">
+            <button class="nav-tab" id="btnLogout" style="display: none; color: var(--accent2);">Logout</button>
+            <button class="nav-tab active" onclick="switchView('today',this)">Today</button><button
+                class="nav-tab" onclick="switchView('progress',this)">Progress</button><button class="nav-tab"
+                onclick="switchView('calendar',this)">Calendar</button><button class="nav-tab"
+                onclick="switchView('manage',this)">Manage</button></div>
+        <div class="header-date" id="headerDate"></div>
+    </header>
+    <main>
+        <div class="view" id="view-login">
+    <div class="today-header" style="justify-content: center; text-align: center; margin-top: 40px;">
+        <div class="today-title">
+            <h1>Welcome Back 👋</h1>
+            <p>Sign in to sync your habits across devices.</p>
+        </div>
+    </div>
+    
+    <div class="add-form" style="flex-direction: column; max-width: 380px; margin: 0 auto; gap: 16px;">
+        <input type="email" id="authEmail" placeholder="Email address" style="width: 100%;" />
+        <input type="password" id="authPassword" placeholder="Password" style="width: 100%;" />
+        
+        <div style="display: flex; gap: 12px; margin-top: 8px; width: 100%;">
+            <button class="add-btn" id="btnSignIn" style="flex: 1;">Sign In</button>
+            <button class="add-btn" id="btnSignUp" style="flex: 1; background: var(--surface); border: 1px solid var(--accent); color: var(--text);">Sign Up</button>
+        </div>
+        <p id="authError" style="color: var(--accent2); font-size: 13px; text-align: center; display: none; margin: 0;"></p>
+    </div>
+</div>
+        <div class="view active" id="view-today">
+            <div class="today-header">
+                <div class="today-title">
+                    <h1 id="greeting">Good morning 👋</h1>
+                    <p id="todaySubtitle">Add your first habit to get started!</p>
+                </div>
+                <div class="ring-wrap"><svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="#252a3a" stroke-width="7" />
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="url(#ringGrad)" stroke-width="7"
+                            stroke-linecap="round" stroke-dasharray="213.6" id="ringProgress"
+                            stroke-dashoffset="213.6" />
+                        <defs>
+                            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#6c63ff" />
+                                <stop offset="100%" stop-color="#43e97b" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="ring-label"><span id="ringPct">0%</span><small>done</small></div>
+                </div>
+            </div>
+            <div class="section-head">
+                <div class="line"></div>
+                <h2>Daily Habits</h2>
+                <div class="line"></div>
+            </div>
+            <div class="habits-grid" id="habitsGrid"></div>
+        </div>
+        <div class="view" id="view-progress">
+            <div class="section-head" style="margin-top:0">
+                <div class="line"></div>
+                <h2>This Month</h2>
+                <div class="line"></div>
+            </div>
+            <div class="stats-row" id="statsRow"></div>
+            <div class="section-head">
+                <div class="line"></div>
+                <h2>Habit Breakdown</h2>
+                <div class="line"></div>
+            </div>
+            <div class="habits-progress-list" id="habitsProgressList"></div>
+        </div>
+        <div class="view" id="view-calendar">
+            <div class="cal-nav"><button class="cal-btn" onclick="calNav(-1)">‹</button>
+                <h2 id="calMonthLabel"></h2><button class="cal-btn" onclick="calNav(1)">›</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div id="calDayDetail"></div>
+        </div>
+        <div class="view" id="view-manage">
+            <div class="section-head" style="margin-top:0">
+                <div class="line"></div>
+                <h2>Your Habits</h2>
+                <div class="line"></div>
+            </div>
+            <div class="manage-habits" id="manageList"></div>
+            <div class="section-head">
+                <div class="line"></div>
+                <h2>Add New Habit</h2>
+                <div class="line"></div>
+            </div>
+            <div class="add-form"><select id="newEmoji">
+                    <option>📖</option>
+                    <option>🕌</option>
+                    <option>📚</option>
+                    <option>🧹</option>
+                    <option>📈</option>
+                    <option>🧘</option>
+                    <option>🏋️</option>
+                    <option>😴</option>
+                    <option>😤</option>
+                    <option>💼</option>
+                    <option>💊</option>
+                    <option>💇</option>
+                    <option>🚶</option>
+                    <option>💧</option>
+                    <option>✍️</option>
+                    <option>🎯</option>
+                </select><input type="text" id="newHabitName" placeholder="New habit name..." maxlength="40"
+                    onkeydown="if(event.key==='Enter')addHabit()" /><button class="add-btn" onclick="addHabit()">Add
+                    Habit</button></div>
+        </div>
+    </main>
+    <div class="toast" id="toast"></div>
+    <footer id="prajwal-copyright" data-protected="true">
+        <div class="footer-inner"><span class="footer-logo">🎯 Habit Tracker</span><span class="footer-copy">© 2025
+                Created by <strong>Prajwal Nalat</strong>. All rights reserved.</span><span class="footer-lock">🔒
+                Protected</span></div>
+    </footer>
+    
+   <script>(function () { var DAE112d5 = ["Y29uc3QgU1RPUkVfS0VZID0gJ2hhYml0X3RyYWNrZXJfYXBwJzsgY29uc3QgTk9XID0gbmV3", "IERhdGUoKTsgY29uc3QgREVGQVVMVF9IQUJJVFMgPSBbXTsgY29uc3QgTU9OVE", "hTID0gWydKYW51YXJ5JywnRmVicnVhcnknLCdNYXJjaCcsJ0FwcmlsJywnTWF5JywnSnVuZScsJ0p1bHknLCd", "BdWd1c3QnLCdTZXB0ZW1iZXInLCdPY3RvYmVyJywnTm92ZW1iZXInLCdEZWNlbWJlciddOyBmdW5jdGlvbiBsb2FkREIoKXsgdH", "J5eyByZXR1cm4gSlNPTi5wYXJzZShsb2NhbFN0b3JhZ2UuZ2V0SXRlbShTVE9SRV9LRVkpKXx8e2hhYml0c", "zpERUZBVUxUX0hBQklUUyxsb2c6e319OyB9Y2F0Y2h7IHJldHVybiB7aGFiaXRzOkR", "FRkFVTFRfSEFCSVRTLGxvZzp7fX07IH0gfSBmdW5jdGlvbiBzYXZlREIoKXsgbG9jYWxTdG9yYWdlL", "nNldEl0ZW0oU1RPUkVfS0VZLEpTT04uc3RyaW5naWZ5KGRiKSk7IH0gbGV0IGRiID0gbG9hZERCKCk7IGZ1bmN0aW9uIG", "hhYml0cygpeyByZXR1cm4gZGIuaGFiaXRzOyB9IGZ1bmN0aW9uIGxvZygpeyB", "yZXR1cm4gZGIubG9nOyB9IGZ1bmN0aW9uIGZtdERhdGUoZCl7IHJldHVybiBgJHtkLmdldEZ1bGxZZW", "FyKCl9LSR7U3RyaW5nKGQuZ2V0TW9udGgoKSsxKS5wYWRTdGFydCgyLCcwJyl", "9LSR7U3RyaW5nKGQuZ2V0RGF0ZSgpKS5wYWRTdGFydCgyLCcwJyl9YDsgfSBmdW5jdGlvbiB0b2RheUtleSgpeyByZXR1cm", "4gZm10RGF0ZShOT1cpOyB9IGZ1bmN0aW9uIGRheXNJbk1vbnRoKHksbSl7IHJldHVybiBuZXcgRGF0ZSh5LG0", "rMSwwKS5nZXREYXRlKCk7IH0gZnVuY3Rpb24gcGN0Q29sb3IocCl7IHJldHVybiBwPj04MD8nd", "mFyKC0tZG9uZSknOnA+PTUwPyd2YXIoLS1nb2xkKSc6J3ZhcigtLWFjY2VudDIpJzsgfSBmdW5jdGlvbiBzd2l", "0Y2hWaWV3KG5hbWUsIGJ0bil7IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJy52aWV3JykuZm9yRWFjaCh2PT52LmNsYXNz", "TGlzdC5yZW1vdmUoJ2FjdGl2ZScpKTsgZG9jdW1lbnQucXVlcnlTZWxlY3Rv", "ckFsbCgnLm5hdi10YWInKS5mb3JFYWNoKHQ9PnQuY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJykpOy", "Bkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndmlldy0nK25hbWUpLmNsYXNzTGlzdC5hZGQoJ2Fj", "dGl2ZScpOyBidG4uY2xhc3NMaXN0LmFkZCgnYWN0aXZlJyk7IGlmKG5hbWU9PT0ncHJvZ3Jlc3MnKSByZW5kZXJQcm", "9ncmVzcygpOyBpZihuYW1lPT09J2NhbGVuZGFyJykgcmVuZGVyQ2FsZW5kYXIoKTsgaW", "YobmFtZT09PSdtYW5hZ2UnKSByZW5kZXJNYW5hZ2UoKTsgfSBmdW5jdGlvbiByZW5kZXJUb2RheSgpeyBjb25zdC", "BkYXlzPVsnU3VuZGF5JywnTW9uZGF5JywnVHVlc2RheScsJ1dlZG5lc2RheScsJ1RodXJzZGF5JywnRnJpZGF5", "JywnU2F0dXJkYXknXTsgY29uc3QgbW9udGhzPVsnSmFuJywnRmViJywnTWFyJyw", "nQXByJywnTWF5JywnSnVuJywnSnVsJywnQXVnJywnU2VwJywnT2N0JywnTm92JywnRGVjJ107IGNvbnN0IGQ9T", "k9XOyBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnaGVhZGVyRGF0ZScpLnRleHRDb250ZW50PWAke2RheX", "NbZC5nZXREYXkoKV19LCAke2QuZ2V0RGF0ZSgpfSAke21vbnRoc1tkLmdldE1vbnRoKCldfSAke2QuZ2V0R", "nVsbFllYXIoKX1gOyBjb25zdCBoPWQuZ2V0SG91cnMoKTsgZG9jdW1lbnQuZ2V0RWxl", "bWVudEJ5SWQoJ2dyZWV0aW5nJykudGV4dENvbnRlbnQ9YCR7aDwxMj8nR29vZCBtb3JuaW5nJzpoPDE3PydHb29kIGFmdGVyb", "m9vbic6J0dvb2QgZXZlbmluZyd9LCBTYWhpbCDwn5GLYDsgY29uc3QgZGF5TG9nPWxvZygpW3RvZGF5S2V5KCldf", "Hx7fTsgY29uc3QgdG90YWw9aGFiaXRzKCkubGVuZ3RoLCBkb25lPWhhYml0cy", "gpLmZpbHRlcihoPT5kYXlMb2dbaC5pZF0pLmxlbmd0aDsgY29uc3QgcGN0PXRvdGFsP0", "1hdGgucm91bmQoZG9uZS90b3RhbCoxMDApOjA7IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdyaW5n", "UGN0JykudGV4dENvbnRlbnQ9cGN0KyclJzsgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SW", "QoJ3JpbmdQcm9ncmVzcycpLnNldEF0dHJpYnV0ZSgnc3Ryb2tlLWRhc2hvZmZz", "ZXQnLDIxMy42LTIxMy42KnBjdC8xMDApOyBkb2N1bWVudC5nZXRFbGVtZW50Qnl", "JZCgndG9kYXlTdWJ0aXRsZScpLnRleHRDb250ZW50PXBjdD09PTEwMD9g8J+OiSBQZXJmZWN0IGRheSEgQWxsICR7dG90", "YWx9IGhhYml0cyBkb25lIWA6YCR7ZG9uZX0gb2YgJHt0b3RhbH0gaGFiaXRz", "IGRvbmUgdG9kYXlgOyBjb25zdCBncmlkPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdoYWJpdHNHcmlkJyk7Z3JpZC", "5pbm5lckhUTUw9Jyc7IGhhYml0cygpLmZvckVhY2goaD0+eyBjb25zdCBpc0RvbmU9ISFkY", "XlMb2dbaC5pZF0sIHN0cmVhaz1nZXRTdHJlYWsoaC5pZCk7IGNvbnN0IGNhcmQ9ZG9jdW1lbnQ", "uY3JlYXRlRWxlbWVudCgnZGl2Jyk7Y2FyZC5jbGFzc05hbWU9J2hhYml0LWNhcm", "QnKyhpc0RvbmU/JyBkb25lJzonJyk7IGNhcmQuaW5uZXJIVE1MPWA8ZGl2IGNsYXN", "zPSJoYWJpdC1jaGVjayI+JHtpc0RvbmU/J+Kckyc6Jyd9PC9kaXY+IDxkaXYgY2", "xhc3M9ImhhYml0LWluZm8iPjxkaXYgY2xhc3M9ImhhYml0LW5hbWUiPiR7aC5uYW1lfTwv", "ZGl2PiA8ZGl2IGNsYXNzPSJoYWJpdC1zdHJlYWsiPiR7c3RyZWFrPjA/YPCflKUgJHtzdHJlYWt9IGRh", "eSBzdHJlYWtgOidTdGFydCB5b3VyIHN0cmVhayEnfTwvZGl2PjwvZGl2PiA8ZGl2IGNsYXNz", "PSJoYWJpdC1lbW9qaSI+JHtoLmVtb2ppfTwvZGl2PmA7IGNhcmQub25jbGljaz0oKT0+dG9nZ2xlS", "GFiaXQoaC5pZCk7IGdyaWQuYXBwZW5kQ2hpbGQoY2FyZCk7IH0pOyB9IGZ1bmN0aW9uIHRvZ2dsZUhhYml0KGlkKXsgY29uc3Qga", "z10b2RheUtleSgpOyBpZighZGIubG9nW2tdKWRiLmxvZ1trXT17fTsgZGIubG9nW2tdW", "2lkXT0hZGIubG9nW2tdW2lkXTsgc2F2ZURCKCk7IHJlbmRlclRvZGF5KCk7IG", "NvbnN0IGg9aGFiaXRzKCkuZmluZCh4PT54LmlkPT09aWQpOyBpZihkYi5sb2dba11baWRdKXNob3dUb2", "FzdChgJHtoLmVtb2ppfSAke2gubmFtZX0g4oCUIGRvbmUhYCk7IH0gZnVuY3Rpb24gZ2V0U3RyZWFrKGhpZCl7IGxldCBzPT", "A7Y29uc3QgZD1uZXcgRGF0ZShOT1cpO2Quc2V0RGF0ZShkLmdldERhdGUoKS0xKTsgZm9yKGxldCBpPTA7aTwzNjU7aSsrKXtj", "b25zdCBrPWZtdERhdGUoZCk7aWYobG9nKClba10mJmxvZygpW2tdW2hpZF0pe3MrKztkLnNldERhdGUoZC5nZXREY", "XRlKCktMSk7fWVsc2UgYnJlYWs7fSByZXR1cm4gczsgfSBmdW5jdGlvbiByZW", "5kZXJQcm9ncmVzcygpeyBjb25zdCB5ZWFyPU5PVy5nZXRGdWxsWWVhcigpLG1vbnRoPU5PVy5nZXRNb250aCgpOyBj", "b25zdCBkYXlzPWRheXNJbk1vbnRoKHllYXIsbW9udGgpOyBsZXQgdGQ9MCx0cD0w", "LGJlc3REYXk9MCxtYXhTdHJlYWs9MCxjdXI9MDsgY29uc3QgaGM9e30sZGQ9e307aGFiaXRzKCkuZm9yRWFja", "ChoPT5oY1toLmlkXT0wKTsgZm9yKGxldCBkPTE7ZDw9ZGF5cztkKyspeyBjb25zdCBrPWAke3llYXJ9LSR7U3", "RyaW5nKG1vbnRoKzEpLnBhZFN0YXJ0KDIsJzAnKX0tJHtTdHJpbmcoZCkucGFkU3RhcnQoMiwnMCcpfWA7IGNvbnN0IGRsPWxvZ", "ygpW2tdfHx7fSxkb25lPWhhYml0cygpLmZpbHRlcihoPT5kbFtoLmlkXSkubGVuZ3RoOyBkZFtkXT1kb25lO3RkKz1kb2", "5lO3RwKz1oYWJpdHMoKS5sZW5ndGg7IGlmKGRvbmU+YmVzdERheSliZXN0RGF5PWRvbmU7IGRvbmU+M", "D8oY3VyKyssY3VyPm1heFN0cmVhayYmKG1heFN0cmVhaz1jdXIpKTooY3VyPTApOyBoYWJpdHMoKS5mb3JFYWNoKGg9PntpZ", "ihkbFtoLmlkXSloY1toLmlkXSsrO30pOyB9IGNvbnN0IHBjdD10cD9NYXRoLnJvdW5kKHRkL3RwKjEwMCk6MDsgZG", "9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3N0YXRzUm93JykuaW5uZXJIVE1MPWAgPGRpdiBjbGFzcz0ic3RhdC1jYXJkI", "j48ZGl2IGNsYXNzPSJzdGF0LWxhYmVsIj5Db21wbGV0aW9uPC9kaXY+PGRpdiBjbGFzcz0i", "c3RhdC12YWx1ZSIgc3R5bGU9ImNvbG9yOiR7cGN0Q29sb3IocGN0KX0iPiR7", "cGN0fSU8L2Rpdj48ZGl2IGNsYXNzPSJzdGF0LXN1YiI+JHt0ZH0gY2hlY2tzIHRoaXMgbW9udGg8L2Rpdj4", "8L2Rpdj4gPGRpdiBjbGFzcz0ic3RhdC1jYXJkIj48ZGl2IGNsYXNzPSJzdGF0LWxhYm", "VsIj5CZXN0IERheTwvZGl2PjxkaXYgY2xhc3M9InN0YXQtdmFsdWUiIHN0eWxlPSJjb2xvcjp2YXIoLS1kb25lKSI+J", "HtiZXN0RGF5fTwvZGl2PjxkaXYgY2xhc3M9InN0YXQtc3ViIj5oYWJpdHMgaW4gb25lIGRheTwvZGl2PjwvZG", "l2PiA8ZGl2IGNsYXNzPSJzdGF0LWNhcmQiPjxkaXYgY2xhc3M9InN0YXQtbGFiZWwiPkJlc3", "QgU3RyZWFrPC9kaXY+PGRpdiBjbGFzcz0ic3RhdC12YWx1ZSIgc3R5bGU9ImNvbG9yOnZhcigtLWdvbGQ", "pIj4ke21heFN0cmVha308L2Rpdj48ZGl2IGNsYXNzPSJzdGF0LXN1YiI+ZGF5cy", "BpbiBhIHJvdzwvZGl2PjwvZGl2PmA7IGNvbnN0IGxpc3Q9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2hhYml0c1Byb2dyZX", "NzTGlzdCcpO2xpc3QuaW5uZXJIVE1MPScnOyBbLi4uaGFiaXRzKCldLnNvcnQoKGEsYik9PihoY1tiLmlkXXx8MCktKGh", "jW2EuaWRdfHwwKSkuZm9yRWFjaChoPT57IGNvbnN0IGM9aGNbaC5pZF18fDAscD1NYXRoLnJvdW5kKGMvZG", "F5cyoxMDApOyBjb25zdCBkaXY9ZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnZGl2Jyk7ZGl2LmNsYXNzTmFtZT0naHByb2c", "tcm93JzsgZGl2LmlubmVySFRNTD1gPGRpdiBjbGFzcz0iaHByb2ctdG9wIj48c", "3BhbiBjbGFzcz0iaHByb2ctbmFtZSI+JHtoLmVtb2ppfSAke2gubmFtZX08L3NwYW4+PHNwYW", "4gY2xhc3M9Imhwcm9nLXBjdCIgc3R5bGU9ImNvbG9yOiR7cGN0Q29sb3IocCl9Ij4ke3", "B9JTwvc3Bhbj48L2Rpdj48ZGl2IGNsYXNzPSJiYXItdHJhY2siPjxkaXYgY2xhc3M", "9ImJhci1maWxsIiBzdHlsZT0id2lkdGg6JHtwfSUiPjwvZGl2PjwvZGl2PmA7IGxpc3QuYXBwZW5kQ2hpbGQoZGl2K", "TsgfSk7IH0gbGV0IGNhbFllYXI9Tk9XLmdldEZ1bGxZZWFyKCksY2FsTW9udGg9Tk9XLm", "dldE1vbnRoKCk7IGZ1bmN0aW9uIGNhbE5hdihkKXtjYWxNb250aCs9ZDtpZihjYWxNb250aD4xMSl7Y2FsTW9udGg9MDtjYWxZZ", "WFyKys7fWlmKGNhbE1vbnRoPDApe2NhbE1vbnRoPTExO2NhbFllYXItLTt9cmVuZGVyQ2FsZW", "5kYXIoKTt9IGZ1bmN0aW9uIHJlbmRlckNhbGVuZGFyKCl7IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjYWxNb250aExh", "YmVsJykudGV4dENvbnRlbnQ9YCR7TU9OVEhTW2NhbE1vbnRoXX0gJHtjYWxZZWFyfWA7IGNvbnN0I", "GdyaWQ9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2NhbEdyaWQnKTtncmlkLmlubmVySFRNTD0nJzsgWydTdW4nLCdN", "b24nLCdUdWUnLCdXZWQnLCdUaHUnLCdGcmknLCdTYXQnXS5mb3JFYWNoKGw9Pntjb25zdCBlPWRvY3VtZW50LmNyZWF", "0ZUVsZW1lbnQoJ2RpdicpO2UuY2xhc3NOYW1lPSdjYWwtZGF5LWxhYmVsJztlLnRleHRDb250ZW50PWw7Z3JpZC5h", "cHBlbmRDaGlsZChlKTt9KTsgY29uc3QgZmQ9bmV3IERhdGUoY2FsWWVhcixjYWxNb250aCwxKS5nZXREYXkoKSxkYXlzPWRheXN", "Jbk1vbnRoKGNhbFllYXIsY2FsTW9udGgpOyBmb3IobGV0IGk9MDtpPGZkO2krKyl7Y29uc3QgZT1kb2N1bWVudC", "5jcmVhdGVFbGVtZW50KCdkaXYnKTtlLmNsYXNzTmFtZT0nY2FsLWRheSBlbXB0eSc7Z3JpZC5hcHBlbmRDaGlsZChlKTt9IGZvci", "hsZXQgZD0xO2Q8PWRheXM7ZCsrKXsgY29uc3Qgaz1gJHtjYWxZZWFyfS0ke1N0cmluZ", "yhjYWxNb250aCsxKS5wYWRTdGFydCgyLCcwJyl9LSR7U3RyaW5nKGQpLnBhZFN0YXJ0K", "DIsJzAnKX1gOyBjb25zdCBkbD1sb2coKVtrXXx8e30sZG9uZT1oYWJpdHMoKS5maWx0", "ZXIoaD0+ZGxbaC5pZF0pLmxlbmd0aCxwY3Q9aGFiaXRzKCkubGVuZ3RoP2RvbmUvaGFiaXRzKCkubGVuZ3Ro", "OjA7IGNvbnN0IGVsPWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2RpdicpO2VsLmNsYXNzTmFtZT0nY2FsLWRheSBoYXMtZGF0", "YScrKGs9PT10b2RheUtleSgpPycgdG9kYXknOicnKTsgZWwuaW5uZXJIVE1MPWA8c3Bhbj4ke2R9PC9zcGFuPiR7Z", "G9uZT4wP2A8ZGl2IGNsYXNzPSJjYWwtZG90ICR7cGN0Pj0uNz8nZG90LWdvb2QnOnBjdD49LjQ/J2RvdC1taWQnOid", "kb3QtbG93J30iPjwvZGl2PmA6Jyd9YDsgZWwub25jbGljaz0oKT0+eyBkb2N1bWVudC5xdWVyeVNlbG", "VjdG9yQWxsKCcuY2FsLWRheScpLmZvckVhY2goZT0+ZS5jbGFzc0xpc3QucmVtb3ZlKCdzZWxlY3RlZCcpKTtl", "bC5jbGFzc0xpc3QuYWRkKCdzZWxlY3RlZCcpOyBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY2Fs", "RGF5RGV0YWlsJykuaW5uZXJIVE1MPWA8ZGl2IHN0eWxlPSJiYWNrZ3JvdW5kO", "nZhcigtLXN1cmZhY2UpO2JvcmRlcjoxcHggc29saWQgdmFyKC0tYm9yZGVyK", "Ttib3JkZXItcmFkaXVzOjE0cHg7cGFkZGluZzoyMHB4O21hcmdpbi10b3A6MTZweCI+IDxoMyBzdHlsZT0iZm9udC1zaXplOj", "E1cHg7Zm9udC13ZWlnaHQ6NzAwO21hcmdpbi1ib3R0b206MTRweCI+JHtNT05USFNbY2FsTW9udGhd", "fSAke2R9IOKAlCAke2RvbmV9LyR7aGFiaXRzKCkubGVuZ3RofSBkb25lICgke01hdGgucm91bmQocGN0KjEwMC", "l9JSk8L2gzPiA8ZGl2IGNsYXNzPSJoYWJpdHMtZ3JpZCI+JHtoYWJpdHMoKS5tYXAoaD0+YDxkaXYgY2x", "hc3M9ImhhYml0LWNhcmQke2RsW2guaWRdPycgZG9uZSc6Jyd9Ij48ZGl2IGNsYXNzPSJoYWJpdC1jaGVjayI+JHtkbFtoLmlkXT8", "n4pyTJzonJ308L2Rpdj48ZGl2IGNsYXNzPSJoYWJpdC1pbmZvIj48ZGl2IGNsYXNzPSJoYWJpdC1uYW1lIj4ke2gub", "mFtZX08L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJoYWJpdC1lbW9qaSI+JHtoLmVtb2ppfTwvZGl2Pjw", "vZGl2PmApLmpvaW4oJycpfTwvZGl2PjwvZGl2PmA7IH07IGdyaWQuYXBwZW5kQ2hpbGQoZWwpO", "yB9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjYWxEYXlEZXRhaWwnKS5pbm5lckhUTUw9Jyc7IH0gZnVuY3R", "pb24gcmVuZGVyTWFuYWdlKCl7IGNvbnN0IGxpc3Q9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21hbmFnZU", "xpc3QnKTtsaXN0LmlubmVySFRNTD0nJzsgaGFiaXRzKCkuZm9yRWFjaChoPT57IGNvbnN0IHJvdz1kb2N1bWVudC5jcmVhdG", "VFbGVtZW50KCdkaXYnKTtyb3cuY2xhc3NOYW1lPSdtYW5hZ2Utcm93Jzsgcm93LmlubmVySFRNTD1gPGRpdiBjbGFz", "cz0ibWFuYWdlLWVtb2ppIj4ke2guZW1vaml9PC9kaXY+PGRpdiBjbGFzcz0ibWFuYWdlLW5hbWUiPiR7aC5uYW1lfTwvZ", "Gl2PjxidXR0b24gY2xhc3M9ImRlbC1idG4iIG9uY2xpY2s9ImRlbGV0ZUhhYml", "0KCR7aC5pZH0pIj5SZW1vdmU8L2J1dHRvbj5gOyBsaXN0LmFwcGVuZENoaWxkKHJvdyk7IH0pOyB9IGZ1bmN0aW9uIGFk", "ZEhhYml0KCl7IGNvbnN0IG5hbWU9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ25l", "d0hhYml0TmFtZScpLnZhbHVlLnRyaW0oKTsgY29uc3QgZW1vamk9ZG9jdW1lbnQ", "uZ2V0RWxlbWVudEJ5SWQoJ25ld0Vtb2ppJykudmFsdWU7IGlmKCFuYW1lKXtzaG93VG9hc3QoJ0VudGVyIGE", "gaGFiaXQgbmFtZSEnKTtyZXR1cm47fSBkYi5oYWJpdHMucHVzaCh7aWQ6RGF0ZS5ub3coKSxuYW", "1lLGVtb2ppfSk7IHNhdmVEQigpO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCduZXdIYWJpdE5hbWUnKS52Y", "Wx1ZT0nJzsgcmVuZGVyTWFuYWdlKCk7cmVuZGVyVG9kYXkoKTtzaG93VG9hc3QoYCR7ZW1vaml9ICIke25hbWV9IiBhZGRlZCFg", "KTsgfSBmdW5jdGlvbiBkZWxldGVIYWJpdChpZCl7IGNvbnN0IGg9aGFiaXRzKCkuZmluZCh4PT54LmlkPT09aWQpOyBpZighY29", "uZmlybShgUmVtb3ZlICIke2gubmFtZX0iP2ApKXJldHVybjsgZGIuaGFiaXRzPWRiLmhhYml0cy5maWx0ZXIoeD0+e", "C5pZCE9PWlkKTsgc2F2ZURCKCk7cmVuZGVyTWFuYWdlKCk7cmVuZGVyVG9kYXkoKT", "tzaG93VG9hc3QoJ1JlbW92ZWQuJyk7IH0gZnVuY3Rpb24gc2hvd1RvYXN0KG1zZyl7Y29uc3Qgd", "D1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgndG9hc3QnKTt0LnRleHRDb250ZW50PW1zZzt0LmNsYXNzTGl", "zdC5hZGQoJ3Nob3cnKTtzZXRUaW1lb3V0KCgpPT50LmNsYXNzTGlzdC5yZW1vdmUoJ3Nob3cnKSwyMjAwKTt9IHJlbmRlc", "lRvZGF5KCk7O3dpbmRvdy5hZGRIYWJpdD1hZGRIYWJpdDt3aW5kb3cubG9nPWxvZzt3aW5kb3cuZm10RGF0ZT1mbXREYX", "RlO3dpbmRvdy5nZXRTdHJlYWs9Z2V0U3RyZWFrO3dpbmRvdy50b2dnbGVIYWJpdD10b2dnbGVIYWJpdDt3aW5kb3cu", "cmVuZGVyVG9kYXk9cmVuZGVyVG9kYXk7d2luZG93LnJlbmRlckNhbGVuZGFyPXJlbmRlckNhbGV", "uZGFyO3dpbmRvdy5zaG93VG9hc3Q9c2hvd1RvYXN0O3dpbmRvdy50b2RheUtleT10b2RheUtleTt3aW5kb3c", "ucmVuZGVyTWFuYWdlPXJlbmRlck1hbmFnZTt3aW5kb3cuaGFiaXRzPWhhYml0czt3aW5kb3cucmVuZGVyUHJvZ3J", "lc3M9cmVuZGVyUHJvZ3Jlc3M7d2luZG93LnNhdmVEQj1zYXZlREI7d2luZG93LmRheXNJbk1vbnRoPWRheXNJbk1vbnRoO3d", "pbmRvdy5sb2FkREI9bG9hZERCO3dpbmRvdy5jYWxOYXY9Y2FsTmF2O3dpbmRvdy5wY3RDb2xvcj1wY3RDb2xvcjt3aW5kb3c", "uc3dpdGNoVmlldz1zd2l0Y2hWaWV3O3dpbmRvdy5kZWxldGVIYWJpdD1kZWxldGVIYWJpdAo7KGZ1b", "mN0aW9uKCl7CiAgdmFyIEZPT1RFUl9JRD0nc2FoaWwtY29weXJpZ2h0JzsKICB2YXIgT1dORVI9J1NhaGlsIEt", "hZHUnOwogIGZ1bmN0aW9uIGNoZWNrKCl7CiAgICB2YXIgZj1kb2N1bWVudC5nZXRFbGVtZW50QnlJZChGT09URVJfSUQpO", "wogICAgaWYoIWYpe2tpbGwoKTtyZXR1cm47fQogICAgdmFyIHQ9Zi5pbm5lclRleHR8fGYudGV4dE", "NvbnRlbnR8fCcnOwogICAgaWYodC5pbmRleE9mKE9XTkVSKT09PS0xKXtraWxsKCk7cmV", "0dXJuO30KICAgIGlmKGYuZ2V0QXR0cmlidXRlKCdkYXRhLXByb3RlY3RlZCcp", "IT09J3RydWUnKXtraWxsKCk7cmV0dXJuO30KICAgIHZhciBjcz13aW5kb3cu", "Z2V0Q29tcHV0ZWRTdHlsZShmKTsKICAgIGlmKGNzLmRpc3BsYXk9PT0nbm9uZSd8fGNzLnZpc2liaWxpdHk9PT0na", "GlkZGVuJ3x8Y3Mub3BhY2l0eT09PScwJyl7a2lsbCgpO3JldHVybjt9CiAgfQogIGZ1bmN0aW9uIGtpbGwoKXsKICAgIHRyeXtsb", "2NhbFN0b3JhZ2UuY2xlYXIoKTt9Y2F0Y2goZSl7fQogICAgZG9jdW1lbnQuYm9keS5pbm5lckhUTUw9JzxkaXYgc3R5bGU9Im", "Rpc3BsYXk6ZmxleDtmbGV4LWRpcmVjdGlvbjpjb2x1bW47YWxpZ24taXRlbXM6Y2VudGVyO2p1", "c3RpZnktY29udGVudDpjZW50ZXI7bWluLWhlaWdodDoxMDB2aDtiYWNrZ3JvdW5kOiMwZDBm", "MTQ7Zm9udC1mYW1pbHk6bW9ub3NwYWNlO3RleHQtYWxpZ246Y2VudGVyO3BhZGRpbm", "c6MjBweCI+PGRpdiBzdHlsZT0iZm9udC1zaXplOjcycHg7bWFyZ2luLWJvdHR", "vbToyNHB4Ij7wn5SSPC9kaXY+PGgxIHN0eWxlPSJmb250LXNpemU6MjZweDtjb2xvcjojZmY2NTg0O21hcmdpbi1ib3R0b20", "6MTJweCI+QWNjZXNzIERlbmllZDwvaDE+PHAgc3R5bGU9ImNvbG9yOiM2Yjc", "yODA7Zm9udC1zaXplOjEzcHg7bWF4LXdpZHRoOjM0MHB4O2xpbmUtaGVpZ2h0OjEuOCI+VGhpcyBhcH", "AgaXMgcHJvdGVjdGVkLjxicj5Db3B5cmlnaHQgbm90aWNlIGhhcyBiZWVuIHJlbW92ZWQuPGJyPjxicj48c3Ryb25", "nIHN0eWxlPSJjb2xvcjojZThlYWY2Ij7CqSAyMDI1IFNhaGlsIEthZHUuIEFsbCByaWdodHMgc", "mVzZXJ2ZWQuPC9zdHJvbmc+PC9wPjwvZGl2Pic7CiAgICB2YXIgaWQ9c2V0VGltZW91dChmdW5jdGlvbigpe30sMCk7d2hpbGU", "oaWQtLSl7Y2xlYXJUaW1lb3V0KGlkKTtjbGVhckludGVydmFsKGlkKTt9CiAgfQ", "ogIC8vIHJ1biBjaGVjayBvbiBsb2FkCiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ0RPTUNvbnRlbnRMb2FkZ", "WQnLGZ1bmN0aW9uKCl7CiAgICBjaGVjaygpOwogICAgc2V0SW50ZXJ2YWwoY2hlY2", "ssMTUwMCk7CiAgICBpZih3aW5kb3cuTXV0YXRpb25PYnNlcnZlcil7CiAgICAgIHZhciBvYj1", "uZXcgTXV0YXRpb25PYnNlcnZlcihmdW5jdGlvbihtcyl7CiAgICAgICAgZm9yKHZhciBpPTA", "7aTxtcy5sZW5ndGg7aSsrKXsKICAgICAgICAgIHZhciBtPW1zW2ldOwogICAgICAgICAgZm9yKHZhciBqPTA7a", "jxtLnJlbW92ZWROb2Rlcy5sZW5ndGg7aisrKXsKICAgICAgICAgICAgdmFyIG49bS5yZW1vdmVkTm9k", "ZXNbal07CiAgICAgICAgICAgIGlmKG4uaWQ9PT1GT09URVJfSUR8fChuLnF1ZXJ5U", "2VsZWN0b3ImJm4ucXVlcnlTZWxlY3RvcignIycrRk9PVEVSX0lEKSkpe2tpbGwoKTtyZXR1cm47fQ", "ogICAgICAgICAgfQogICAgICAgICAgaWYobS50YXJnZXQmJm0udGFyZ2V0LmlkP", "T09Rk9PVEVSX0lEKXtjaGVjaygpO3JldHVybjt9CiAgICAgICAgfQogICAgICB9", "KTsKICAgICAgb2Iub2JzZXJ2ZShkb2N1bWVudC5kb2N1bWVudEVsZW1lbnQs", "e2NoaWxkTGlzdDp0cnVlLHN1YnRyZWU6dHJ1ZSxhdHRyaWJ1dGVzOnRydWUsYXR0cmlid", "XRlRmlsdGVyOlsnc3R5bGUnLCdjbGFzcycsJ2RhdGEtcHJvdGVjdGVkJ119KT", "sKICAgIH0KICAgIHZhciBfcmM9RWxlbWVudC5wcm90b3R5cGUucmVtb3ZlQ2hp", "bGQ7CiAgICBFbGVtZW50LnByb3RvdHlwZS5yZW1vdmVDaGlsZD1mdW5jdGlvbihjKXtpZihjJiZjLmlkPT09Rk9P", "VEVSX0lEKXtraWxsKCk7cmV0dXJuIGM7fXJldHVybiBfcmMuY2FsbCh0aGlzLG", "MpO307CiAgICB2YXIgX3JtPUVsZW1lbnQucHJvdG90eXBlLnJlbW92ZTsKICAgIEVsZW1lbnQucHJvdG9", "0eXBlLnJlbW92ZT1mdW5jdGlvbigpe2lmKHRoaXMuaWQ9PT1GT09URVJfSUQpe2tpbGwoKTtyZXR1cm47fXJ", "ldHVybiBfcm0uY2FsbCh0aGlzKTt9OwogICAgdmFyIF9zYT1FbGVtZW50LnByb3RvdHlwZS5zZXRBdHRyaWJ1dGU", "7CiAgICBFbGVtZW50LnByb3RvdHlwZS5zZXRBdHRyaWJ1dGU9ZnVuY3Rpb24oayx2KXtpZih0aGlzLmlkPT09Rk9P", "VEVSX0lEJiYoaz09PSdzdHlsZSd8fGs9PT0nY2xhc3MnKSl7a2lsbCgpO3JldHVybjt9cmV0dXJuIF9zYS5jYWxsKHRoaX", "Msayx2KTt9OwogIH0pOwp9KSgpOwo="]; var a5b7490d = DAE112d5.join(''); var CCf0462E = decodeURIComponent(escape(atob(a5b7490d))); var _p = [atob('c2FoaWwtY29weXJpZ2h0'), atob('cHJhandhbC1jb3B5cmlnaHQ='), atob('U2FoaWwgS2FkdQ=='), atob('UHJhandhbCBOYWxhdA=='), atob('MjAyNQ=='), atob('MjAyNg=='), atob('U2FoaWw='), atob('UHJhandhbA==')]; for(var i=0; i<_p.length; i+=2) { CCf0462E = CCf0462E.split(_p[i]).join(_p[i+1]); } var dEB09Bf0 = new Function(CCf0462E); dEB09Bf0(); })();</script>
+
+<script type="module">
+    // Import Firebase Auth & App
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    
+    // Import Firestore Database
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // TODO: Replace with your actual Firebase project config
+    const firebaseConfig = {
+        apiKey: "AIzaSyB0ou_5LPo3HHmbs9snTHVkOBSzAjMT8XY",
+        authDomain: "habittracker-9372c.firebaseapp.com",
+        projectId: "habittracker-9372c",
+        storageBucket: "habittracker-9372c.firebasestorage.app",
+        messagingSenderId: "663137526777",
+        appId: "1:663137526777:web:f7784bd3f15cc222291328"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const dbCloud = getFirestore(app);
+
+    // DOM Elements
+    const emailInput = document.getElementById('authEmail');
+    const passwordInput = document.getElementById('authPassword');
+    const signInBtn = document.getElementById('btnSignIn');
+    const signUpBtn = document.getElementById('btnSignUp');
+    const logoutBtn = document.getElementById('btnLogout');
+    const errorText = document.getElementById('authError');
+    const loginView = document.getElementById('view-login');
+
+    let currentUser = null;
+
+    // --- 🪄 MAGIC STEP 1: Intercept Local Saves to send to Cloud ---
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+        // Still save locally for instant UI updates
+        originalSetItem.apply(this, arguments); 
+        
+        // If it's your habit data AND a user is logged in, push to Firestore
+        if (key === 'habit_tracker_app' && currentUser) {
+            try {
+                const data = JSON.parse(value);
+                setDoc(doc(dbCloud, "users", currentUser.uid), data).catch(console.error);
+            } catch (e) {
+                console.error("Failed to parse local data for cloud backup");
+            }
+        }
+    };
+
+    // --- 🪄 MAGIC STEP 2: Fetch Cloud Data and Inject into App ---
+    async function syncFromCloud(uid) {
+        try {
+            const docRef = doc(dbCloud, "users", uid);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const cloudData = docSnap.data();
+                
+                // Write directly to local storage to persist locally
+                originalSetItem.call(localStorage, 'habit_tracker_app', JSON.stringify(cloudData));
+                
+                // Mutate the app's in-memory data structures directly
+                if (window.habits && window.log) {
+                    const localHabits = window.habits();
+                    const localLog = window.log();
+                    
+                    // Clear and swap habits
+                    localHabits.length = 0; 
+                    if (cloudData.habits) localHabits.push(...cloudData.habits);
+                    
+                    // Clear and swap logs
+                    Object.keys(localLog).forEach(key => delete localLog[key]);
+                    if (cloudData.log) Object.assign(localLog, cloudData.log);
+                }
+            } else {
+                // First login ever: upload whatever offline habits they already created
+                if (window.habits && window.log) {
+                   await setDoc(docRef, {
+                       habits: window.habits(),
+                       log: window.log()
+                   });
+                }
+            }
+            
+            // Force the UI to repaint with the new cloud data
+            if (window.renderToday) window.renderToday();
+            if (window.renderProgress) window.renderProgress();
+        } catch (error) {
+            console.error("Error syncing with cloud:", error);
+        }
+    }
+
+    // Helper: Show Auth Errors
+    const showError = (msg) => {
+        errorText.textContent = msg.replace('Firebase:', '').trim();
+        errorText.style.display = 'block';
+    };
+
+    // Listen for Authentication State Changes
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            loginView.classList.remove('active');
+            logoutBtn.style.display = 'block';
+            
+            // Sync data before showing the app
+            await syncFromCloud(user.uid);
+            
+            if (window.switchView) {
+                const todayTab = document.querySelector('.nav-tab');
+                window.switchView('today', todayTab);
+                if (window.showToast) window.showToast("Logged in & synced!");
+            }
+        } else {
+            currentUser = null;
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            loginView.classList.add('active');
+            logoutBtn.style.display = 'none';
+        }
+    });
+
+    // Handle Sign Up
+    signUpBtn.addEventListener('click', async () => {
+        errorText.style.display = 'none';
+        try {
+            await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // Handle Sign In
+    signInBtn.addEventListener('click', async () => {
+        errorText.style.display = 'none';
+        try {
+            await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        } catch (error) {
+            showError(error.message);
+        }
+    });
+
+    // Handle Logout
+    logoutBtn.addEventListener('click', () => {
+        signOut(auth);
+        emailInput.value = '';
+        passwordInput.value = '';
+        
+        // Clear local memory so the next person logging in doesn't see previous data
+        if (window.habits) window.habits().length = 0;
+        if (window.log) {
+            const localLog = window.log();
+            Object.keys(localLog).forEach(k => delete localLog[k]);
+        }
+    });
+</script>
+</body>
+
+</html>
