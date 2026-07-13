@@ -621,33 +621,42 @@
         <div class="logo">Prajwal<span>.habits</span></div>
         <div class="nav-tabs">
             <button class="nav-tab" id="btnLogout" style="display: none; color: var(--accent2);">Logout</button>
-            <button class="nav-tab active" onclick="switchView('today',this)">Today</button><button
-                class="nav-tab" onclick="switchView('progress',this)">Progress</button><button class="nav-tab"
-                onclick="switchView('calendar',this)">Calendar</button><button class="nav-tab"
-                onclick="switchView('manage',this)">Manage</button></div>
+            <!-- 
+                FIX: Added class 'app-tab' and hidden them by default.
+                They will only be shown via JavaScript once logged in.
+            -->
+            <button class="nav-tab app-tab" style="display: none;" onclick="switchView('today',this)">Today</button>
+            <button class="nav-tab app-tab" style="display: none;" onclick="switchView('progress',this)">Progress</button>
+            <button class="nav-tab app-tab" style="display: none;" onclick="switchView('calendar',this)">Calendar</button>
+            <button class="nav-tab app-tab" style="display: none;" onclick="switchView('manage',this)">Manage</button>
+        </div>
         <div class="header-date" id="headerDate"></div>
     </header>
     <main>
-        <div class="view" id="view-login">
-    <div class="today-header" style="justify-content: center; text-align: center; margin-top: 40px;">
-        <div class="today-title">
-            <h1>Welcome Back 👋</h1>
-            <p>Sign in to sync your habits across devices.</p>
+        <!-- FIX: Set login view to 'active' by default on page load -->
+        <div class="view active" id="view-login">
+            <div class="today-header" style="justify-content: center; text-align: center; margin-top: 40px;">
+                <div class="today-title">
+                    <h1>Welcome Back 👋</h1>
+                    <p>Sign in to sync your habits across devices.</p>
+                </div>
+            </div>
+            
+            <div class="add-form" style="flex-direction: column; max-width: 380px; margin: 0 auto; gap: 16px;">
+                <input type="email" id="authEmail" placeholder="Email address" style="width: 100%;" />
+                <input type="password" id="authPassword" placeholder="Password" style="width: 100%;" />
+                
+                <div style="display: flex; gap: 12px; margin-top: 8px; width: 100%;">
+                    <button class="add-btn" id="btnSignIn" style="flex: 1;">Sign In</button>
+                    <!-- Button disabled as requested -->
+                    <button class="add-btn" id="btnSignUp" disabled style="flex: 1; background: var(--surface); border: 1px solid var(--accent); color: var(--text); opacity: 0.5; cursor: not-allowed;">Sign Up</button>
+                </div>
+                <p id="authError" style="color: var(--accent2); font-size: 13px; text-align: center; display: none; margin: 0;"></p>
+            </div>
         </div>
-    </div>
-    
-    <div class="add-form" style="flex-direction: column; max-width: 380px; margin: 0 auto; gap: 16px;">
-        <input type="email" id="authEmail" placeholder="Email address" style="width: 100%;" />
-        <input type="password" id="authPassword" placeholder="Password" style="width: 100%;" />
-        
-        <div style="display: flex; gap: 12px; margin-top: 8px; width: 100%;">
-            <button class="add-btn" id="btnSignIn" style="flex: 1;">Sign In</button>
-            <button class="add-btn" id="btnSignUp" disabled style="flex: 1; background: var(--surface); border: 1px solid var(--accent); color: var(--text); opacity: 0.5; cursor: not-allowed;">Sign Up</button>
-        </div>
-        <p id="authError" style="color: var(--accent2); font-size: 13px; text-align: center; display: none; margin: 0;"></p>
-    </div>
-</div>
-        <div class="view active" id="view-today">
+
+        <!-- FIX: Removed 'active' from here so it doesn't flash before login -->
+        <div class="view" id="view-today">
             <div class="today-header">
                 <div class="today-title">
                     <h1 id="greeting">Good morning 👋</h1>
@@ -770,6 +779,8 @@
     const logoutBtn = document.getElementById('btnLogout');
     const errorText = document.getElementById('authError');
     const loginView = document.getElementById('view-login');
+    // FIX: Select all the main app navigation tabs
+    const appTabs = document.querySelectorAll('.app-tab');
 
     let currentUser = null;
 
@@ -846,11 +857,14 @@
             loginView.classList.remove('active');
             logoutBtn.style.display = 'block';
             
+            // FIX: Show the app tabs now that we are logged in
+            appTabs.forEach(t => t.style.display = 'inline-block');
+            
             // Sync data before showing the app
             await syncFromCloud(user.uid);
             
             if (window.switchView) {
-                const todayTab = document.querySelector('.nav-tab');
+                const todayTab = appTabs[0]; // Select the 'Today' tab
                 window.switchView('today', todayTab);
                 if (window.showToast) window.showToast("Logged in & synced!");
             }
@@ -858,6 +872,10 @@
             currentUser = null;
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            // FIX: Hide all the app tabs so they can't be clicked
+            appTabs.forEach(t => t.style.display = 'none');
+            
             loginView.classList.add('active');
             logoutBtn.style.display = 'none';
         }
