@@ -839,6 +839,8 @@
             // Force the UI to repaint with the new cloud data
             if (window.renderToday) window.renderToday();
             if (window.renderProgress) window.renderProgress();
+            if (window.renderCalendar) window.renderCalendar(); // Add this
+            if (window.renderManage) window.renderManage();     // Add this
         } catch (error) {
             console.error("Error syncing with cloud:", error);
         }
@@ -901,18 +903,25 @@
         }
     });
 
-    // Handle Logout
+
+// Handle Logout
     logoutBtn.addEventListener('click', () => {
         signOut(auth);
         emailInput.value = '';
         passwordInput.value = '';
         
-        // Clear local memory so the next person logging in doesn't see previous data
+        // 1. Clear the actual browser storage
+        localStorage.removeItem('habit_tracker_app');
+        
+        // 2. Clear local memory so the next person logging in doesn't see previous data
         if (window.habits) window.habits().length = 0;
         if (window.log) {
             const localLog = window.log();
             Object.keys(localLog).forEach(k => delete localLog[k]);
         }
+        
+        // 3. Clear the UI visually before taking them to the login screen
+        if (window.renderToday) window.renderToday(); 
     });
 </script>
 </body>
